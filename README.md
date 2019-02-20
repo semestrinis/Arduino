@@ -1,3 +1,3 @@
 # Arduino
 
-Čia bus saugojamas arduino
+Čia bus saugojamas arduino projekto kodo failai
