@@ -21,9 +21,23 @@
    This code is in the public domain.
   
    */
-  
+  #include <Wire.h>
+#include <Adafruit_BMP085.h>
+#include <BH1750FVI.h>
   #include <SPI.h>
   #include <Ethernet.h>
+  #include "DHT.h"
+
+#define DHTPIN 2     // Digital pin connected to the DHT sensor
+// Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
+// Pin 15 can work but DHT must be disconnected during program upload.
+
+#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+DHT dht(DHTPIN, DHTTYPE);
+
+BH1750FVI LightSensor(BH1750FVI::k_DevModeContLowRes);
+Adafruit_BMP085 bmp;
+
   
   // assign a MAC address for the ethernet controller.
   // fill in your address here:
@@ -85,6 +99,14 @@
     }
     // give the Ethernet shield a second to initialize:
     delay(1000);
+
+    dht.begin();
+LightSensor.begin();  
+if (!bmp.begin()) {
+  Serial.println("Could not find a valid BMP085 sensor, check wiring!");
+  while (1) {}
+  }
+    delay(1000);
   }
   
   void loop() {
@@ -116,6 +138,45 @@
     // if there's a successful connection:
     if (client.connect(server, 80)) 
     {
+
+      // Reading temperature or humidity takes about 250 milliseconds!
+  float humidity = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float temperature1 = dht.readTemperature();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(humidity) || isnan(temperature1)) {
+    Serial.println(F("Nepavyko nuskaityti aplinkos temperatūros ir drėgmės matmenų!"));
+    return;
+  }
+//int temperature1 = 0;
+//int temperature2 = 0;
+//int humidity = 0;
+//int presure = 0;
+//int Ligth = 0;
+
+
+  Serial.print(F("Humidity: "));
+  Serial.print(humidity);
+  Serial.print(F("%  Temperature: "));
+  Serial.print(temperature1);
+  Serial.print(F("°C /n"));
+
+
+  float presure = bmp.readPressure();
+  float temperature2 = bmp.readTemperature();
+Serial.print("Temperature = ");
+    Serial.print(temperature2);
+    Serial.println(" *C");
+    
+    Serial.print("Pressure = ");
+    Serial.print(presure);
+    Serial.println(" Pa");
+
+    uint16_t Ligth = LightSensor.GetLightIntensity();
+    Serial.print("Light: ");
+    Serial.println(Ligth);
+  
       Serial.println("connecting...");
       // send the HTTP GET request:
       //client.println("get http://webhook.site/9c31004d-d6b8-437f-9853-a3190cdfc55c");
@@ -149,11 +210,7 @@ PostData += itemID + ",";
 //      PostData=PostData+",";
 //  }
 
-int temperature1 = 0;
-int temperature2 = 0;
-int humidity = 0;
-int presure = 0;
-int Ligth = 0;
+
 
     PostData += "\"Temperature1\":";
     PostData += temperature1;
